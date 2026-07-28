@@ -1,0 +1,6 @@
+{
+  "name": "BuildFirst",
+  "description": "Project-Based Learning platform MVP teaching concepts on-demand through real projects.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,20 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="flameGrad1" x1="16" y1="4" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="flameGrad2" x1="20" y1="8" x2="28" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="flameShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#d97706" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Flame outer -->
+  <path d="M24 4c-4 8-8 12-8 20 0 6 4 12 8 12s8-6 8-12c0-8-4-12-8-20z" fill="url(#flameGrad1)" filter="url(#flameShadow)"/>
+  <!-- Flame inner -->
+  <path d="M24 8c-3 6-6 10-6 16 0 4 3 8 6 8s6-4 6-8c0-6-3-10-6-16z" fill="url(#flameGrad2)" opacity="0.7"/>
+</svg>

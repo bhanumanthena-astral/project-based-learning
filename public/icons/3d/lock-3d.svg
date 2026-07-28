@@ -1,0 +1,29 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="lockGrad1" x1="12" y1="16" x2="36" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9ca3af"/>
+      <stop offset="50%" stop-color="#6b7280"/>
+      <stop offset="100%" stop-color="#4b5563"/>
+    </linearGradient>
+    <linearGradient id="lockGrad2" x1="16" y1="20" x2="32" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#d1d5db"/>
+      <stop offset="100%" stop-color="#6b7280"/>
+    </linearGradient>
+    <linearGradient id="lockGrad3" x1="16" y1="8" x2="32" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9ca3af"/>
+      <stop offset="100%" stop-color="#6b7280"/>
+    </linearGradient>
+    <filter id="lockShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#6b7280" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Lock shackle -->
+  <path d="M16 20V14c0-4.4 3.6-8 8-8s8 3.6 8 8v6" stroke="url(#lockGrad3)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Lock body -->
+  <rect x="12" y="20" width="24" height="20" rx="4" fill="url(#lockGrad1)" filter="url(#lockShadow)"/>
+  <!-- Lock highlight -->
+  <rect x="14" y="22" width="20" height="16" rx="3" fill="url(#lockGrad2)" opacity="0.5"/>
+  <!-- Keyhole -->
+  <circle cx="24" cy="30" r="3" fill="#374151"/>
+  <rect x="22" y="30" width="4" height="6" rx="1" fill="#374151"/>
+</svg>

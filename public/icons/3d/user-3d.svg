@@ -1,0 +1,22 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="userGrad1" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="userGrad2" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="userShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- User head -->
+  <circle cx="24" cy="18" r="8" fill="url(#userGrad1)" filter="url(#userShadow)"/>
+  <!-- User body -->
+  <path d="M12 40c0-8 6-12 12-12s12 4 12 12" fill="url(#userGrad1)" filter="url(#userShadow)"/>
+  <!-- Highlight -->
+  <circle cx="24" cy="18" r="6" fill="url(#userGrad2)" opacity="0.5"/>
+</svg>

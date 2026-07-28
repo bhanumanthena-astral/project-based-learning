@@ -1,0 +1,20 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="folderGrad1" x1="8" y1="12" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="folderGrad2" x1="12" y1="16" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="folderShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Folder back -->
+  <path d="M8 16h12l4-4h16v24H8z" fill="url(#folderGrad1)" filter="url(#folderShadow)"/>
+  <!-- Folder front -->
+  <path d="M8 20h32v16H8z" fill="url(#folderGrad2)" opacity="0.6"/>
+</svg>

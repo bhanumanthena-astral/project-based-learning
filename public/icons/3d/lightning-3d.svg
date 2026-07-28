@@ -1,0 +1,20 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="boltGrad1" x1="24" y1="2" x2="24" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="40%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="boltGrad2" x1="18" y1="8" x2="30" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="boltShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Main bolt body -->
+  <path d="M28 4L14 26h8l-3 18 17-24h-9l5-16z" fill="url(#boltGrad1)" filter="url(#boltShadow)"/>
+  <!-- Highlight face -->
+  <path d="M26 8L16 24h7l-2.5 14L32 18h-8l4-12z" fill="url(#boltGrad2)" opacity="0.6"/>
+</svg>

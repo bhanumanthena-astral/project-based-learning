@@ -1,0 +1,22 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="termGrad1" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="termGrad2" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="termShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Terminal body -->
+  <rect x="8" y="8" width="32" height="32" rx="6" fill="url(#termGrad1)" filter="url(#termShadow)"/>
+  <!-- Terminal screen -->
+  <rect x="12" y="12" width="24" height="24" rx="3" fill="url(#termGrad2)" opacity="0.5"/>
+  <!-- Terminal prompt -->
+  <path d="M16 20l4 4-4 4M24 28h8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

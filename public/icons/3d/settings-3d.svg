@@ -1,0 +1,29 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="settingsGrad1" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="settingsGrad2" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="settingsShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#7c3aed" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Gear outer ring -->
+  <circle cx="24" cy="24" r="16" fill="url(#settingsGrad1)" filter="url(#settingsShadow)"/>
+  <!-- Gear inner circle -->
+  <circle cx="24" cy="24" r="8" fill="url(#settingsGrad2)" opacity="0.6"/>
+  <!-- Gear teeth -->
+  <rect x="22" y="6" width="4" height="6" rx="1" fill="url(#settingsGrad1)"/>
+  <rect x="22" y="36" width="4" height="6" rx="1" fill="url(#settingsGrad1)"/>
+  <rect x="6" y="22" width="6" height="4" rx="1" fill="url(#settingsGrad1)"/>
+  <rect x="36" y="22" width="6" height="4" rx="1" fill="url(#settingsGrad1)"/>
+  <rect x="10" y="10" width="6" height="4" rx="1" fill="url(#settingsGrad1)" transform="rotate(45 13 12)"/>
+  <rect x="32" y="32" width="6" height="4" rx="1" fill="url(#settingsGrad1)" transform="rotate(45 35 34)"/>
+  <rect x="32" y="10" width="6" height="4" rx="1" fill="url(#settingsGrad1)" transform="rotate(-45 35 12)"/>
+  <rect x="10" y="32" width="6" height="4" rx="1" fill="url(#settingsGrad1)" transform="rotate(-45 13 34)"/>
+</svg>
