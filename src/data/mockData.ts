@@ -13,6 +13,14 @@ export interface UserProfile {
   enrolledCourses: string[];
 }
 
+export interface UserSession extends UserProfile {
+  isFirstLogin: boolean;
+  onboardingSeen?: boolean;
+  tutorialCompleted: boolean;
+  tutorialCompletedAt: string | null;
+  tutorialReplayRequested?: boolean;
+}
+
 export interface CourseMilestone {
   id: number;
   title: string;
@@ -67,7 +75,7 @@ export interface ActivityItem {
   color: string;
 }
 
-export const currentUser: UserProfile = {
+export const currentUser: UserSession = {
   id: 'user-001',
   name: 'Arjun Kumar',
   email: 'arjun.kumar@srmap.edu.in',
@@ -80,6 +88,9 @@ export const currentUser: UserProfile = {
   streak: 12,
   completedProjects: 1,
   enrolledCourses: ['dbms-001', 'react-001'],
+  isFirstLogin: true,
+  tutorialCompleted: false,
+  tutorialCompletedAt: null as string | null,
 };
 
 export const courses: CourseItem[] = [

@@ -24,6 +24,8 @@ import {
   computeProgressMetrics,
 } from '../services/progressService';
 import { FrontendWorkspace } from '../components/FrontendWorkspace';
+import { StoryBreadcrumb } from '../components/workspace/StoryBreadcrumb';
+import { markFirstTaskSeen } from '../lib/onboardingStorage';
 
 export const WorkspacePage: React.FC = () => {
   const navigate = useNavigate();
@@ -34,6 +36,11 @@ export const WorkspacePage: React.FC = () => {
   const setActiveCourseId = context?.setActiveCourseId;
 
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
+
+  // First workspace visit (right after onboarding): mark the "first task" seen
+  useEffect(() => {
+    markFirstTaskSeen();
+  }, []);
 
   // Track mode: 'dbms' or 'frontend'
   const isFrontendByDefault = activeCourse.category === 'Frontend';
@@ -138,6 +145,9 @@ export const WorkspacePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Story bar — always tells the student where they are in the project narrative */}
+      <StoryBreadcrumb activeCourseId={activeCourseId} />
+
       {/* Course & Mode Switcher Bar */}
       <div className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -201,7 +211,7 @@ export const WorkspacePage: React.FC = () => {
               <span>{activeCourse.title}</span>
               <span className="text-gray-400">/</span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-violet-600/10 text-violet-700 border border-violet-600/20">
-                Milestone {activeMilestone.id}: {activeMilestone.title}
+                Step {activeMilestone.id} of {activeCourse.totalMilestones}: {activeMilestone.title}
               </span>
             </div>
 
@@ -288,7 +298,7 @@ export const WorkspacePage: React.FC = () => {
                               )}
                             </div>
                             <p className="text-[11px] text-gray-500 line-clamp-1 mt-0.5">
-                              {tbl.status === 'built' ? 'Table schema completed' : tbl.status === 'active' ? 'Currently building' : 'Locked - complete previous tables first'}
+                              {tbl.status === 'built' ? 'Table schema completed' : tbl.status === 'active' ? 'Currently building' : 'Not yet - finish the steps before it'}
                             </p>
                           </div>
                         </div>
@@ -337,11 +347,11 @@ export const WorkspacePage: React.FC = () => {
             {/* RIGHT PANEL (7 cols) — Step Task & Dark SQL Workbench */}
             <div className="lg:col-span-7 space-y-6">
               {/* Step Task Card */}
-              <div className="glass-card p-6 space-y-4">
+              <div data-tut="task-card" className="glass-card p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/80 pb-3">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-violet-600 block">
-                      MILESTONE {activeMilestone.id} · STEP {activeStep.stepNumber}
+                      STEP {activeMilestone.id} OF {activeCourse.totalMilestones} · CURRENT TASK
                     </span>
                     <h2 className="text-lg font-extrabold text-[#1e1b4b] tracking-tight">
                       {activeStep.taskTitle}
@@ -359,20 +369,21 @@ export const WorkspacePage: React.FC = () => {
 
                 {/* Concept Needed Banner */}
                 {currentConcept && (
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div data-tut="concept-callout" className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="space-y-0.5">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                        Concept Needed
+                        Before this step, learn:
                       </span>
                       <h3 className="font-bold text-sm text-[#1e1b4b]">
                         {currentConcept.name}
                       </h3>
                     </div>
                     <button
+                      data-tut="concept-learn-btn"
                       onClick={() => onOpenConcept?.(currentConcept.id)}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-violet-700 bg-white/80 border border-violet-200 hover:bg-white shadow-xs shrink-0"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-violet-700 bg-white/80 border border-violet-200 hover:bg-white shadow-xs shrink-0 cursor-pointer"
                     >
-                      Learn {currentConcept.name} →
+                      Learn it →
                     </button>
                   </div>
                 )}
@@ -440,7 +451,7 @@ export const WorkspacePage: React.FC = () => {
                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:opacity-95"
                     style={{ background: '#7c3aed' }}
                   >
-                    <span>Mark Step Complete →</span>
+                    <span>Done — next step →</span>
                   </button>
                 </div>
 

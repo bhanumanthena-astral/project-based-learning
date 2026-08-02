@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
 import { SearchModal } from './SearchModal';
 import { ConceptDrawer } from './ConceptDrawer';
 import { NotificationsPanel } from './NotificationsPanel';
 import { HelpModal } from './HelpModal';
-import { courses } from '../data/mockData';
+import { TutorialOverlay } from './tutorial/TutorialOverlay';
+import { courses, UserSession } from '../data/mockData';
 
-export const AppLayout: React.FC = () => {
+interface AppLayoutProps {
+  userSession: UserSession;
+  setUserSession: Dispatch<SetStateAction<UserSession>>;
+}
+
+export const AppLayout: React.FC<AppLayoutProps> = ({ userSession, setUserSession }) => {
+  const location = useLocation();
   const [activeCourseId, setActiveCourseId] = useState<string>(courses[0].id);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isConceptDrawerOpen, setIsConceptDrawerOpen] = useState(false);
@@ -16,6 +23,27 @@ export const AppLayout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  // Auto-start the guided tutorial on first login visit to the dashboard,
+  // or when the user requests a replay from Settings (works even after completion/skip)
+  useEffect(() => {
+    const shouldStart =
+      location.pathname === '/app/dashboard' &&
+      (userSession.tutorialReplayRequested === true ||
+        (userSession.isFirstLogin === true && userSession.tutorialCompleted === false));
+    if (shouldStart) {
+      const t = setTimeout(() => setIsTutorialOpen(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, [location.pathname, userSession.isFirstLogin, userSession.tutorialCompleted, userSession.tutorialReplayRequested]);
+
+  const handleTutorialComplete = () => {
+    setIsTutorialOpen(false);
+    if (userSession.tutorialReplayRequested) {
+      setUserSession((prev) => ({ ...prev, tutorialReplayRequested: false }));
+    }
+  };
 
   const handleOpenConcept = (conceptId?: string) => {
     if (conceptId) {
@@ -71,7 +99,9 @@ export const AppLayout: React.FC = () => {
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <Outlet context={{ activeCourseId, onOpenConcept: handleOpenConcept, setActiveCourseId }} />
+          <Outlet
+            context={{ activeCourseId, onOpenConcept: handleOpenConcept, setActiveCourseId, userSession, setUserSession }}
+          />
         </main>
       </div>
 
@@ -105,6 +135,15 @@ export const AppLayout: React.FC = () => {
             setIsConceptDrawerOpen(false);
             setSelectedConceptId(null);
           }}
+        />
+      )}
+
+      {/* First-run guided tutorial / replay */}
+      {isTutorialOpen && (
+        <TutorialOverlay
+          userSession={userSession}
+          setUserSession={setUserSession}
+          onComplete={handleTutorialComplete}
         />
       )}
     </div>

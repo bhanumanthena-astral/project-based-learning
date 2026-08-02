@@ -33,12 +33,13 @@ export const ConceptDrawer: React.FC<ConceptDrawerProps> = ({ conceptId: propCon
   if (!conceptItem) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-indigo-950/20 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+    <div data-tut="drawer" className="fixed inset-0 z-50 bg-indigo-950/20 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
       {/* Backdrop click listener */}
       <div className="absolute inset-0" onClick={handleClose} />
 
       {/* Slide-Over Drawer Container */}
       <div
+        data-tut="drawer-panel"
         className="relative z-10 w-full max-w-md h-full flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300 border-l border-white/80 shadow-2xl"
         style={{
           background: 'rgba(255, 255, 255, 0.38)',
@@ -64,6 +65,7 @@ export const ConceptDrawer: React.FC<ConceptDrawerProps> = ({ conceptId: propCon
           </div>
 
           <button
+            data-tut="drawer-close"
             onClick={handleClose}
             className="p-2 rounded-2xl text-gray-500 hover:text-gray-900 hover:bg-white/50 transition-all border border-transparent hover:border-white/60"
             aria-label="Close concept drawer"

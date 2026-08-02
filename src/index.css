@@ -1689,3 +1689,108 @@ h2, .heading-lg {
   100% { transform: scale(1); opacity: 1; }
 }
 .badge-enter { animation: badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* ============================================
+   ONBOARDING & TUTORIAL ANIMATIONS
+   ============================================ */
+
+@keyframes bf-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-bf-fade-up { animation: bf-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes bf-pop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-bf-pop { animation: bf-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@keyframes bf-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.animate-bf-bounce { animation: bf-bounce 1.2s ease-in-out infinite; }
+
+@keyframes bf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.animate-bf-pulse { animation: bf-pulse 1.6s ease-in-out infinite; }
+
+@keyframes bf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-bf-fade-in { animation: bf-fade-in 0.4s ease both; }
+
+@keyframes bf-confetti-fall {
+  0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(var(--bf-tx, 0px), 110vh, 0) rotate(var(--bf-spin, 360deg)); opacity: 0; }
+}
+.bf-confetti {
+  animation-name: bf-confetti-fall;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  animation-fill-mode: both;
+}
+
+/* ============================================
+   ONBOARDING — FUTURISTIC GLASSMORPHIC SCENE
+   ============================================ */
+
+@keyframes bf-orb-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-24px) scale(1.04); }
+}
+@keyframes bf-orb-float-reverse {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(20px) scale(0.97); }
+}
+@keyframes bf-grid-scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(60px); }
+}
+@keyframes bf-shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+@keyframes bf-rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes bf-counter-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes bf-scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes bf-pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.6; }
+  70% { transform: scale(1.15); opacity: 0; }
+  100% { transform: scale(0.95); opacity: 0; }
+}
+.bf-fade-up { animation: bf-fade-up 0.5s ease-out forwards; }
+.bf-scale-in { animation: bf-scale-in 0.4s ease-out forwards; }
+
+/* Onboarding responsive grids */
+.bf-table-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 640px) {
+  .bf-table-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.bf-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 480px) {
+  .bf-compare-grid { grid-template-columns: 1fr 1fr; }
+}

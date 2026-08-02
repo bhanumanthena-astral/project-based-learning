@@ -48,7 +48,7 @@ export const LandingPage: React.FC = () => {
             className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold glass-card border border-white/80 transition-all text-[#1e1b4b]"
           >
             <Terminal size={14} style={{ color: 'var(--accent)' }} />
-            <span>Playground</span>
+            <span>Practice Zone</span>
           </button>
           <button
             onClick={() => navigate('/app/dashboard')}

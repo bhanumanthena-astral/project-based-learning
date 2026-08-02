@@ -195,7 +195,7 @@ export const ProjectsPage: React.FC = () => {
                     </div>
 
                     {isLocked ? (
-                      <p className="text-xs text-gray-400 font-mono">🔒 Locked</p>
+                      <p className="text-xs text-gray-400 font-mono">🔒 Not yet</p>
                     ) : (
                       <div className="space-y-0.5">
                         {tbl.columns.map((col, idx) => (

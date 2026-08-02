@@ -54,14 +54,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange, onOpenSearch
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', route: '/app/dashboard', icon: <LayoutDashboard size={18} /> },
-    { label: 'My Projects', route: '/app/projects', icon: <FolderOpen size={18} /> },
-    { label: 'Progress', route: '/app/progress', icon: <TrendingUp size={18} /> },
+    { label: "What I'm Building", route: '/app/projects', icon: <FolderOpen size={18} /> },
+    { label: "How Far I've Come", route: '/app/progress', icon: <TrendingUp size={18} /> },
   ];
 
   const courseNavs: NavItem[] = [
     { label: 'My Courses', route: '/app/courses', icon: <BookOpen size={18} /> },
     { label: 'Learning Capsules', route: '/app/learning', icon: <BrainCircuit size={18} /> },
-    { label: 'Playground', route: '/app/playground', icon: <Terminal size={18} /> },
+    { label: 'Concepts Library', route: '/app/courses/concepts', icon: <BookOpen size={18} /> },
+    { label: 'Practice Zone', route: '/app/playground', icon: <Terminal size={18} /> },
   ];
 
   const accountNavs: NavItem[] = [
@@ -71,11 +72,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange, onOpenSearch
 
   const renderNavItem = (item: NavItem) => {
     const active = item.route ? isActive(item.route) : false;
+    const tutTarget =
+      item.route === '/app/dashboard' ? 'nav-dashboard' :
+      item.route === '/app/projects' ? 'nav-projects' : undefined;
 
     return (
       <a
         key={item.label}
         href={item.route || '#'}
+        data-tut={tutTarget}
         onClick={(e) => {
           e.preventDefault();
           if (item.action) { item.action(); return; }

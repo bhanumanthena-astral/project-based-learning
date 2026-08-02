@@ -36,10 +36,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     const path = location.pathname;
     if (path.includes('/dashboard')) return { title: 'Dashboard', sub: activeCourse.title };
     if (path.includes('/workspace')) return { title: 'My Projects Workspace', sub: activeCourse.title };
-    if (path.includes('/playground')) return { title: 'Interactive Playground', sub: 'SQL & React Sandboxes' };
+    if (path.includes('/playground')) return { title: 'Practice Zone', sub: 'SQL & React Sandboxes' };
     if (path.includes('/profile')) return { title: 'Student Profile', sub: currentUser.college };
     if (path.includes('/settings')) return { title: 'Settings', sub: 'Preferences & Configuration' };
     if (path.includes('/recap')) return { title: 'Milestone Recap', sub: activeCourse.title };
+    if (path.includes('/progress')) return { title: "How far you've come", sub: activeCourse.title };
+    if (path.includes('/courses')) return { title: 'Your courses', sub: activeCourse.title };
     return { title: 'Nxtagent CS', sub: 'Project-Based Workspace' };
   };
 
@@ -158,7 +160,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <div className="icon-badge-sm" style={{ background: 'rgba(255, 255, 255, 0.2)' }}>
             <Terminal size={14} className="text-white" strokeWidth={1.5} />
           </div>
-          <span>Playground</span>
+          <span>Practice Zone</span>
         </button>
       </div>
     </header>

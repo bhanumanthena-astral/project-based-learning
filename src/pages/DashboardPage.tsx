@@ -3,7 +3,6 @@ import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import {
   ArrowRight,
   Database,
-  BookOpen,
   Clock,
   Trophy,
   Zap,
@@ -11,18 +10,23 @@ import {
   Sparkles,
   Check,
 } from 'lucide-react';
-import { courses, currentUser, activityFeed } from '../data/mockData';
+import { courses, currentUser, activityFeed, UserSession } from '../data/mockData';
 import { courseData } from '../data/courseData';
+import { WhatToDoNowCard } from '../components/dashboard/WhatToDoNowCard';
+import { hasSeenFirstTask } from '../lib/onboardingStorage';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const context = useOutletContext<{ activeCourseId: string; onOpenConcept: (id?: string) => void; setActiveCourseId: (id: string) => void }>();
+  const context = useOutletContext<{ activeCourseId: string; onOpenConcept: (id?: string) => void; setActiveCourseId: (id: string) => void; userSession: UserSession }>();
   const activeCourseId = context?.activeCourseId || courses[0].id;
   const onOpenConcept = context?.onOpenConcept;
   const setActiveCourseId = context?.setActiveCourseId;
 
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const location = useLocation();
+
+  // First visit right after onboarding: simplified dashboard (no stats / activity yet)
+  const isFirstVisit = context?.userSession?.isFirstLogin === true && !hasSeenFirstTask();
 
   useEffect(() => {
     if (location.hash === '#courses') {
@@ -32,47 +36,77 @@ export const DashboardPage: React.FC = () => {
     }
   }, [location.hash]);
 
-  return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="glass-card-elevated p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-violet-50 text-violet-700 border border-violet-200">
-              ACTIVE PROJECT
-            </span>
-            <span className="text-xs font-semibold text-gray-500">
-              {activeCourse.subject}
-            </span>
+  // ============ FIRST-VISIT SIMPLIFIED DASHBOARD ============
+  if (isFirstVisit) {
+    return (
+      <div className="space-y-8">
+        <WhatToDoNowCard activeCourseId={activeCourseId} />
+
+        <div className="glass-card-elevated p-8">
+          <h2 className="text-xl font-extrabold text-[#111827] text-center">
+            Here's how every lesson works
+          </h2>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                num: '1',
+                color: '#7c3aed',
+                title: 'See what you need to build',
+                body: 'Each session starts with a specific task. You always know what you\u2019re working toward.',
+              },
+              {
+                num: '2',
+                color: '#f59e0b',
+                title: 'Learn only what\u2019s needed',
+                body: 'When a task needs a concept you don\u2019t know, it surfaces right then — no 2-hour lectures.',
+              },
+              {
+                num: '3',
+                color: '#10b981',
+                title: 'Watch your project grow',
+                body: 'Every step adds something real. At the end you have a working database you built yourself.',
+              },
+            ].map((item) => (
+              <div key={item.num} className="glass-card p-6 text-center">
+                <div
+                  className="mx-auto w-9 h-9 rounded-full text-white text-sm font-extrabold flex items-center justify-center"
+                  style={{ background: item.color }}
+                >
+                  {item.num}
+                </div>
+                <h3 className="mt-3 text-sm font-extrabold text-[#111827]">{item.title}</h3>
+                <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">{item.body}</p>
+              </div>
+            ))}
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#111827]">
-            Welcome back, {currentUser.name}! 👋
-          </h1>
-
-          <p className="text-xs md:text-sm text-gray-600 font-medium leading-relaxed">
-            Building <strong className="text-[#111827]">{activeCourse.title}</strong>. Complete step objectives to construct real database tables and master CS concepts.
-          </p>
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => navigate('/app/workspace')}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-extrabold text-white shadow-lg transition-all hover:opacity-95 hover:-translate-y-0.5 cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}
+            >
+              <span>Jump into your first task</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
-
-        <button
-          onClick={() => {
-            setActiveCourseId?.(activeCourse.id);
-            navigate('/app/workspace');
-          }}
-          className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-xs font-extrabold text-white shadow-sm transition-all hover:opacity-95 shrink-0 bg-violet-600 hover:bg-violet-700"
-        >
-          <span>Continue Building Workspace</span>
-          <ArrowRight size={16} />
-        </button>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* What to do now — the dominant answer to "what should I do right now?" */}
+      <WhatToDoNowCard activeCourseId={activeCourseId} />
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Stat 1: Project Built */}
         <div className="glass-card-interactive p-5 space-y-2.5">
           <span className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-            PROJECT BUILT
+            PROJECT BUILT SO FAR
           </span>
           <div className="flex items-baseline justify-between">
             <p className="text-3xl font-extrabold font-mono text-[#111827]">
@@ -89,7 +123,7 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
           <p className="text-[10px] text-gray-500 font-bold">
-            2 of 6 milestones completed
+            2 of 6 steps completed
           </p>
         </div>
 
@@ -144,7 +178,7 @@ export const DashboardPage: React.FC = () => {
         {/* Stat 4: Active Milestones */}
         <div className="glass-card-interactive p-5 space-y-2.5">
           <span className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-            MILESTONES DONE
+            STEPS DONE
           </span>
           <div className="flex items-baseline justify-between">
             <p className="text-3xl font-extrabold font-mono text-[#111827]">
@@ -161,7 +195,7 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
           <p className="text-[10px] text-gray-500 font-bold">
-            Milestone 3 active build
+            Step 3 active build
           </p>
         </div>
       </div>
@@ -188,7 +222,7 @@ export const DashboardPage: React.FC = () => {
 
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-mono font-bold">
-                <span className="text-gray-500">Milestone Progress</span>
+                <span className="text-gray-500">Step Progress</span>
                 <span className="text-violet-600">{activeCourse.progressPercent}%</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">

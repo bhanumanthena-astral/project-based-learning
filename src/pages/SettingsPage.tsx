@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Settings,
   Moon,
@@ -10,12 +11,19 @@ import {
   Shield,
   Database,
   Terminal,
+  GraduationCap,
 } from 'lucide-react';
 import { resetStudentProgress } from '../services/progressService';
 import { useTheme } from '../context/ThemeContext';
+import { UserSession } from '../data/mockData';
 
 export const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { userSession, setUserSession } = useOutletContext<{
+    userSession: UserSession;
+    setUserSession: Dispatch<SetStateAction<UserSession>>;
+  }>();
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(isDarkMode ? 'dark' : 'light');
   const [streakReminders, setStreakReminders] = useState(true);
   const [autoFormatSql, setAutoFormatSql] = useState(true);
@@ -182,6 +190,57 @@ export const SettingsPage: React.FC = () => {
               <option value="14px">14px Large</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Learning Experience */}
+      <div className="glass-card p-6 space-y-4">
+        <h2 className="text-sm font-extrabold text-[#1e1b4b] uppercase tracking-wider flex items-center gap-2 border-b border-white/80 pb-3">
+          <GraduationCap size={16} className="text-violet-600" />
+          <span>Learning experience</span>
+        </h2>
+
+        <div className="glass-card p-4 space-y-3">
+          <p className="text-sm font-extrabold text-[#1e1b4b]">Replay guided tutorial</p>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Forgot how the app works? Run the overlay tour again — even if you've already
+            watched or skipped it. It starts the moment you land on the dashboard.
+          </p>
+          <button
+            onClick={() => {
+              setUserSession((prev) => ({
+                ...prev,
+                tutorialReplayRequested: true,
+              }));
+              navigate('/app/dashboard');
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-all cursor-pointer"
+          >
+            Replay tutorial
+          </button>
+        </div>
+
+        <div className="glass-card p-4 space-y-3">
+          <p className="text-sm font-extrabold text-[#1e1b4b]">Restart onboarding intro</p>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            See the "what is BuildFirst" intro again — the 4-step story of how you'll build
+            your project.
+          </p>
+          <button
+            onClick={() => {
+              setUserSession((prev) => ({
+                ...prev,
+                isFirstLogin: true,
+                tutorialCompleted: false,
+                tutorialCompletedAt: null,
+                onboardingSeen: false,
+              }));
+              navigate('/onboarding');
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition-all cursor-pointer"
+          >
+            Restart onboarding intro
+          </button>
         </div>
       </div>
 
