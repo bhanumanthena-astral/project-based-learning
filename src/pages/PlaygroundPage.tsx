@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Terminal,
   Play,
@@ -9,7 +9,6 @@ import {
   Sparkles,
   Laptop,
   Smartphone,
-  Check,
   Circle,
   AlertCircle,
   Lock,
@@ -139,8 +138,8 @@ const DarkEditor: React.FC<{
   onChange,
   onRun,
   onReset,
-  runLabel = 'Run ▶',
-  hint = '⌘+Enter',
+  runLabel = 'Run â–¶',
+  hint = 'âŒ˜+Enter',
   rows = 14,
   disabled,
   languageTag = 'JSX Syntax',
@@ -222,7 +221,7 @@ const CheckerPanel: React.FC<{
   rules,
   results,
   onCheck,
-  checkLabel = 'Check My Work →',
+  checkLabel = 'Check My Work â†’',
   successTitle,
   successBody,
   showSuccess,
@@ -308,7 +307,7 @@ const CheckerPanel: React.FC<{
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 flex items-center gap-3">
           <AlertCircle size={18} className="text-amber-600 shrink-0" />
           <p className="text-xs font-bold">
-            Not yet — {requiredTotal - requiredPass} required check(s) still failing. Review the hints and try again.
+            Not yet â€” {requiredTotal - requiredPass} required check(s) still failing. Review the hints and try again.
           </p>
         </div>
       )}
@@ -623,10 +622,10 @@ ORDER BY a.appt_date DESC;`;
 
         {/* Glass Tab Switcher */}
         <div className="glass-card p-1 flex items-center gap-1 self-start sm:self-auto flex-wrap">
-          {tabButton('sql', 'SQL Workbench', <Database size={15} />, activeTab)}
-          {tabButton('react', 'React Sandbox', <Code2 size={15} />, activeTab)}
-          {tabButton('css', 'CSS Playground', <Palette size={15} />, activeTab)}
-          {tabButton('challenges', 'Challenges', <Timer size={15} />, activeTab)}
+          {tabButton('sql', 'SQL Workbench', <Database size={15} />)}
+          {tabButton('react', 'React Sandbox', <Code2 size={15} />)}
+          {tabButton('css', 'CSS Playground', <Palette size={15} />)}
+          {tabButton('challenges', 'Challenges', <Timer size={15} />)}
         </div>
       </div>
 
@@ -722,7 +721,7 @@ ORDER BY a.appt_date DESC;`;
                 <div className="bg-[#161b22] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
                   <span className="font-mono text-xs text-slate-300 font-bold">Query Results</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {currentResult.rows.length} rows · {executionTime}
+                    {currentResult.rows.length} rows Â· {executionTime}
                   </span>
                 </div>
 
@@ -928,7 +927,7 @@ ORDER BY a.appt_date DESC;`;
                 {previewLoading && (
                   <p className="text-[11px] font-mono text-violet-600 flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded-full border-2 border-violet-600 border-t-transparent animate-spin inline-block" />
-                    Compiling with Babel…
+                    Compiling with Babelâ€¦
                   </p>
                 )}
               </div>
@@ -944,7 +943,7 @@ ORDER BY a.appt_date DESC;`;
                   className="w-full h-[200px] bg-white border border-white/90 rounded-xl"
                   title="target-preview"
                 />
-                <p className="text-[11px] text-gray-400 font-medium">Your goal — try to match this</p>
+                <p className="text-[11px] text-gray-400 font-medium">Your goal â€” try to match this</p>
               </div>
             </div>
           </div>
@@ -952,7 +951,7 @@ ORDER BY a.appt_date DESC;`;
           {/* Milestone Checker */}
           <CheckerPanel
             kicker={`React Milestone ${activeComp.milestoneId} Checker`}
-            title={`Milestone checker — ${activeComp.title}`}
+            title={`Milestone checker â€” ${activeComp.title}`}
             statusLabel={compStatus[activeComp.id] === 'completed' ? 'Completed' : 'Active'}
             statusTone={compStatus[activeComp.id] === 'completed' ? 'green' : 'violet'}
             rules={activeComp.checkerRules}
@@ -976,7 +975,7 @@ ORDER BY a.appt_date DESC;`;
               <ul className="mt-3 space-y-1.5 text-xs text-gray-600">
                 {activeComp.hints.map((h, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="text-violet-600 font-bold shrink-0">→</span>
+                    <span className="text-violet-600 font-bold shrink-0">â†’</span>
                     <span>{h}</span>
                   </li>
                 ))}
@@ -1041,8 +1040,8 @@ ORDER BY a.appt_date DESC;`;
                 setCssCode(activeCss.starterCode);
                 applyCss(activeCss.starterCode, activeCss.solutionPreviewHTML);
               }}
-              runLabel="Apply Styles ▶"
-              hint="⌘+Enter"
+              runLabel="Apply Styles â–¶"
+              hint="âŒ˜+Enter"
               languageTag="CSS"
             />
 
@@ -1113,8 +1112,8 @@ ORDER BY a.appt_date DESC;`;
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
                       <DifficultyBadge difficulty={comp.difficulty} />
-                      <span className="text-[11px] text-amber-600 font-bold">⏱ {comp.timeLimit} min</span>
-                      <span className="text-[11px] text-emerald-600 font-bold">⭐ +{comp.xpReward} XP</span>
+                      <span className="text-[11px] text-amber-600 font-bold">â± {comp.timeLimit} min</span>
+                      <span className="text-[11px] text-emerald-600 font-bold">â­ +{comp.xpReward} XP</span>
                     </div>
                   </button>
                 );
@@ -1134,8 +1133,8 @@ ORDER BY a.appt_date DESC;`;
                 setChallengeResults(null);
                 setChallengeBanner(null);
               }}
-              runLabel="Run ▶"
-              hint="⌘+Enter"
+              runLabel="Run â–¶"
+              hint="âŒ˜+Enter"
               disabled={timeUp}
             />
 
@@ -1201,7 +1200,7 @@ ORDER BY a.appt_date DESC;`;
             {timeUp && (
               <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 flex items-center gap-3 animate-bf-pop">
                 <AlertCircle size={18} className="text-rose-600 shrink-0" />
-                <p className="text-xs font-bold">Time's up! The editor is locked — hit Reset and try again.</p>
+                <p className="text-xs font-bold">Time's up! The editor is locked â€” hit Reset and try again.</p>
               </div>
             )}
 
@@ -1214,7 +1213,7 @@ ORDER BY a.appt_date DESC;`;
               rules={activeChallenge.checkerRules}
               results={challengeResults}
               onCheck={handleChallengeSubmit}
-              checkLabel="Submit Solution →"
+              checkLabel="Submit Solution â†’"
               successTitle={`Challenge Complete! +${activeChallenge.xpReward} XP earned`}
               successBody="All required checks pass. Great speed and precision!"
               showSuccess={challengeBanner === 'success'}
