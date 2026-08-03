@@ -6,20 +6,29 @@ import {
   Code2,
   Database,
   CheckCircle2,
-  Table as TableIcon,
-  Copy,
   Sparkles,
-  ChevronDown,
-  ChevronRight,
-  FileCode,
   Laptop,
   Smartphone,
   Check,
   Circle,
-  X,
   AlertCircle,
+  Lock,
+  Timer,
+  Palette,
+  Eye,
+  HelpCircle,
+  Gift,
+  Pause,
 } from 'lucide-react';
 import { courses } from '../data/mockData';
+import {
+  reactComponents,
+  cssComponents,
+  challengeComponents,
+  CheckerRule,
+  Difficulty,
+  ComponentStatus,
+} from '../data/playgroundData';
 
 declare global {
   interface Window {
@@ -28,8 +37,291 @@ declare global {
   }
 }
 
+/* ================= COMPILER / PREVIEW HELPERS ================= */
+
+let babelPromise: Promise<any> | null = null;
+
+const getBabel = (): Promise<any> => {
+  if (!babelPromise) {
+    babelPromise = new Promise((resolve, reject) => {
+      if (window.Babel) return resolve(window.Babel);
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/@babel/standalone/babel.min.js';
+      s.onload = () => resolve(window.Babel);
+      s.onerror = () => {
+        babelPromise = null;
+        reject(new Error('Could not load the Babel compiler. Check your internet connection.'));
+      };
+      document.body.appendChild(s);
+    });
+  }
+  return babelPromise;
+};
+
+const transformCode = async (code: string): Promise<string> => {
+  try {
+    const Babel = await getBabel();
+    const prep = code.replace(
+      /^import\s*\{([^}]*)\}\s*from\s*['"]react['"];\s*$/gm,
+      'const { $1 } = React;'
+    );
+    const transformed = Babel.transform(prep, { presets: ['react'] }).code;
+    const componentCode = (transformed as string).replace('export default', 'const __Component =');
+    return `<!DOCTYPE html><html><head>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>* { box-sizing: border-box; } body { margin: 0; font-family: Inter, system-ui, sans-serif; }</style>
+</head><body>
+<div id="root"></div>
+<script>${componentCode}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(__Component));
+</script>
+</body></html>`;
+  } catch (e: any) {
+    const msg = String(e?.message ?? 'Unknown error').replace(/</g, '&lt;');
+    return `<html><body style="padding:20px;font-family:monospace;color:#ef4444;font-size:13px"><strong>Compile error</strong><br/>${msg}</body></html>`;
+  }
+};
+
+const cssPreviewHTML = (styles: string, baseHTML: string): string => {
+  const bodyMatch = baseHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : baseHTML;
+  return `<!DOCTYPE html><html><head>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>${styles}</style>
+</head><body style="margin:0">${bodyContent}</body></html>`;
+};
+
+const fireConfetti = () => {
+  if (typeof window !== 'undefined' && window.confetti) {
+    window.confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+  }
+};
+
+const formatTime = (total: number): string => {
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
+/* ================= SHARED UI PRIMITIVES ================= */
+
+const DIFFICULTY_STYLES: Record<Difficulty, { bg: string; color: string }> = {
+  Beginner: { bg: 'rgba(22,163,74,0.1)', color: '#16a34a' },
+  Intermediate: { bg: 'rgba(245,158,11,0.1)', color: '#d97706' },
+  Advanced: { bg: 'rgba(124,58,237,0.1)', color: '#7c3aed' },
+};
+
+const DifficultyBadge: React.FC<{ difficulty: Difficulty }> = ({ difficulty }) => (
+  <span
+    className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide"
+    style={{ background: DIFFICULTY_STYLES[difficulty].bg, color: DIFFICULTY_STYLES[difficulty].color }}
+  >
+    {difficulty}
+  </span>
+);
+
+const DarkEditor: React.FC<{
+  filename: string;
+  code: string;
+  onChange: (v: string) => void;
+  onRun: () => void;
+  onReset: () => void;
+  runLabel?: string;
+  hint?: string;
+  rows?: number;
+  disabled?: boolean;
+  languageTag?: string;
+}> = ({
+  filename,
+  code,
+  onChange,
+  onRun,
+  onReset,
+  runLabel = 'Run ▶',
+  hint = '⌘+Enter',
+  rows = 14,
+  disabled,
+  languageTag = 'JSX Syntax',
+}) => {
+  const handleKey = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      onRun();
+    }
+  };
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-[#0d1117] overflow-hidden shadow-2xl">
+      {/* Editor Toolbar */}
+      <div className="bg-[#161b22] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#ff5f57' }} />
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#febc2e' }} />
+            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#28c840' }} />
+          </div>
+          <span className="font-mono text-xs text-[#8b949e] truncate">{filename}</span>
+          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-full hidden md:inline-block">
+            {languageTag}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={onReset}
+            className="text-[10px] text-slate-400 hover:text-white font-mono flex items-center gap-1 border border-[#30363d] rounded-lg px-2.5 py-1.5 cursor-pointer transition-colors"
+          >
+            <RotateCcw size={11} /> Reset
+          </button>
+          <button
+            onClick={onRun}
+            className="text-[10px] font-mono font-bold rounded-lg px-3 py-1.5 border flex items-center gap-1.5 cursor-pointer transition-all hover:brightness-125"
+            style={{ background: 'rgba(124,58,237,0.25)', color: '#c4b5fd', borderColor: 'rgba(124,58,237,0.3)' }}
+          >
+            <Play size={10} className="fill-current" /> {runLabel}
+          </button>
+          <span className="hidden xl:inline-block text-[10px] font-mono text-[#484f58]">{hint}</span>
+        </div>
+      </div>
+
+      {/* Textarea Code Input */}
+      <textarea
+        value={code}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKey}
+        rows={rows}
+        disabled={disabled}
+        spellCheck={false}
+        className="w-full bg-[#0d1117] text-[#7ee787] font-mono text-xs p-4 outline-none resize-y leading-relaxed border-none disabled:opacity-50"
+      />
+    </div>
+  );
+};
+
+interface CheckResult extends CheckerRule {
+  passing: boolean;
+}
+
+const CheckerPanel: React.FC<{
+  kicker: string;
+  title: string;
+  statusLabel?: string;
+  statusTone?: 'green' | 'violet';
+  rules: CheckerRule[];
+  results: CheckResult[] | null;
+  onCheck: () => void;
+  checkLabel?: string;
+  successTitle: string;
+  successBody: string;
+  showSuccess: boolean;
+}> = ({
+  kicker,
+  title,
+  statusLabel,
+  statusTone = 'violet',
+  rules,
+  results,
+  onCheck,
+  checkLabel = 'Check My Work →',
+  successTitle,
+  successBody,
+  showSuccess,
+}) => {
+  const requiredTotal = rules.filter((r) => r.required).length;
+  const requiredPass = results?.filter((r) => r.required && r.passing).length ?? 0;
+
+  return (
+    <div className="glass-card p-6 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/80 pb-3">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 block">
+            {kicker}
+          </span>
+          <h3 className="font-extrabold text-base text-[#1e1b4b] flex items-center gap-2 flex-wrap">
+            {title}
+            {statusLabel && (
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                  statusTone === 'green'
+                    ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
+                    : 'bg-violet-600/10 text-violet-700 border border-violet-600/20'
+                }`}
+              >
+                {statusLabel}
+              </span>
+            )}
+          </h3>
+        </div>
+
+        <button
+          onClick={onCheck}
+          className="px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:opacity-95 self-start sm:self-auto cursor-pointer"
+          style={{ background: '#7c3aed' }}
+        >
+          {checkLabel}
+        </button>
+      </div>
+
+      {/* Checklist */}
+      {results && (
+        <div className="space-y-2">
+          {results.map((r) => (
+            <div
+              key={r.id}
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/90 bg-white/60"
+            >
+              {r.passing ? (
+                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+              ) : (
+                <Circle size={16} className="text-gray-300 shrink-0" />
+              )}
+              <span className={`text-xs ${r.passing ? 'font-bold text-[#1e1b4b]' : 'text-gray-500'}`}>
+                {r.label}
+              </span>
+              {r.required ? (
+                <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-violet-600/10 text-violet-700 border border-violet-600/20 shrink-0">
+                  required
+                </span>
+              ) : (
+                <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-gray-500/10 text-gray-500 border border-gray-200 shrink-0">
+                  bonus
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Success Banner */}
+      {showSuccess && (
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 flex items-center gap-3 animate-bf-pop">
+          <Sparkles size={20} className="text-emerald-600 shrink-0" />
+          <div>
+            <p className="font-bold text-sm">{successTitle}</p>
+            <p className="text-xs mt-0.5">{successBody}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fail Banner */}
+      {results && !showSuccess && requiredPass < requiredTotal && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 flex items-center gap-3">
+          <AlertCircle size={18} className="text-amber-600 shrink-0" />
+          <p className="text-xs font-bold">
+            Not yet — {requiredTotal - requiredPass} required check(s) still failing. Review the hints and try again.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ================= PAGE ================= */
+
+type PlaygroundTab = 'sql' | 'react' | 'css' | 'challenges';
+
 export const PlaygroundPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'sql' | 'react'>('sql');
+  const [activeTab, setActiveTab] = useState<PlaygroundTab>('sql');
 
   // --- SQL PLAYGROUND STATE ---
   const defaultSqlQuery = `-- Hospital Management System Database
@@ -111,110 +403,209 @@ ORDER BY a.appt_date DESC;`;
   };
 
   // --- REACT PLAYGROUND STATE ---
-  const [selectedFile, setSelectedFile] = useState<'App.jsx' | 'LoginPage.jsx' | 'styles.css'>('LoginPage.jsx');
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-
-  const defaultReactCode = `import { useState } from 'react';
-
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    alert('Welcome ' + email + '!');
+  const buildInitialStatus = (): Record<string, ComponentStatus> => {
+    const initial: Record<string, ComponentStatus> = {};
+    reactComponents.forEach((c) => {
+      initial[c.id] = c.status;
+    });
+    try {
+      const saved = localStorage.getItem('bf_playground_completed_v1');
+      if (saved) {
+        const ids = JSON.parse(saved) as string[];
+        ids.forEach((id) => {
+          if (initial[id] !== undefined) initial[id] = 'completed';
+        });
+        for (let i = 0; i < reactComponents.length; i++) {
+          const s = initial[reactComponents[i].id];
+          if (s === 'completed') continue;
+          if (s === 'locked') initial[reactComponents[i].id] = 'active';
+          break;
+        }
+      }
+    } catch {
+      // ignore storage failures
+    }
+    return initial;
   };
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #e0e7ff, #fdf4ff)',
-      padding: '1rem',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <div style={{
-        background: 'rgba(255,255,255,0.85)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.9)',
-        borderRadius: '20px',
-        padding: '2rem',
-        width: '100%',
-        maxWidth: '340px',
-        boxShadow: '0 8px 32px rgba(124,58,237,0.12)'
-      }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1b4b', marginBottom: '4px' }}>
-          Sign in
-        </h2>
-        <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '20px' }}>
-          Welcome back to BuildFirst
-        </p>
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            style={{
-              width: '100%', padding: '10px 12px',
-              border: '1px solid rgba(124,58,237,0.2)',
-              borderRadius: '10px', marginBottom: '10px',
-              fontSize: '13px', boxSizing: 'border-box',
-              background: 'rgba(255,255,255,0.8)', outline: 'none'
-            }}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={{
-              width: '100%', padding: '10px 12px',
-              border: '1px solid rgba(124,58,237,0.2)',
-              borderRadius: '10px', marginBottom: '16px',
-              fontSize: '13px', boxSizing: 'border-box',
-              background: 'rgba(255,255,255,0.8)', outline: 'none'
-            }}
-          />
-          <button type="submit" style={{
-            width: '100%', padding: '10px',
-            background: '#7c3aed', color: 'white',
-            border: 'none', borderRadius: '10px',
-            fontSize: '14px', fontWeight: 600, cursor: 'pointer'
-          }}>
-            Sign in →
-          </button>
-        </form>
-      </div>
-    </div>
+  const [compStatus, setCompStatus] = useState<Record<string, ComponentStatus>>(buildInitialStatus);
+  const defaultActiveId =
+    reactComponents.find((c) => c.status === 'active')?.id ?? reactComponents[0].id;
+  const [activeCompId, setActiveCompId] = useState<string>(defaultActiveId);
+  const [reactCode, setReactCode] = useState<string>(
+    () => reactComponents.find((c) => c.id === defaultActiveId)?.starterCode ?? ''
   );
-}`;
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [reactResults, setReactResults] = useState<CheckResult[] | null>(null);
+  const [reactBanner, setReactBanner] = useState<'success' | 'fail' | null>(null);
+  const [showHints, setShowHints] = useState(false);
 
-  const [reactCode, setReactCode] = useState(defaultReactCode);
-  const [milestoneCompleted, setMilestoneCompleted] = useState(false);
+  const activeComp = reactComponents.find((c) => c.id === activeCompId) ?? reactComponents[0];
 
-  // Checker evaluation logic
-  const checkEmailInput = reactCode.includes('type="email"') || reactCode.includes("type='email'");
-  const checkPasswordInput = reactCode.includes('type="password"') || reactCode.includes("type='password'");
-  const checkForm = reactCode.includes('<form') && reactCode.includes('</form>');
-  const checkSubmitButton = reactCode.includes('type="submit"') || reactCode.includes("type='submit'");
+  const runCode = async (code: string) => {
+    setPreviewLoading(true);
+    const src = await transformCode(code);
+    setPreviewSrc(src);
+    setPreviewLoading(false);
+  };
 
-  const allChecksPass = checkEmailInput && checkPasswordInput && checkForm && checkSubmitButton;
+  // Auto-run the starter code on mount
+  useEffect(() => {
+    runCode(reactComponents.find((c) => c.id === defaultActiveId)?.starterCode ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleCheckWork = () => {
-    if (allChecksPass) {
-      setMilestoneCompleted(true);
-      if (typeof window !== 'undefined' && window.confetti) {
-        window.confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
+  const selectComponent = (comp: (typeof reactComponents)[number]) => {
+    if (compStatus[comp.id] === 'locked') return;
+    setActiveCompId(comp.id);
+    setReactCode(comp.starterCode);
+    setReactResults(null);
+    setReactBanner(null);
+    runCode(comp.starterCode);
+  };
+
+  const handleReactCheck = () => {
+    const results = activeComp.checkerRules.map((rule) => ({
+      ...rule,
+      passing: reactCode.includes(rule.check),
+    }));
+    setReactResults(results);
+    const requiredFail = results.filter((r) => r.required && !r.passing).length;
+    if (requiredFail === 0) {
+      fireConfetti();
+      setReactBanner('success');
+      const completedIds = [
+        ...Object.entries(compStatus)
+          .filter(([, s]) => s === 'completed')
+          .map(([id]) => id),
+        activeComp.id,
+      ];
+      try {
+        localStorage.setItem(
+          'bf_playground_completed_v1',
+          JSON.stringify(Array.from(new Set(completedIds)))
+        );
+      } catch {
+        // ignore storage failures
       }
+      setCompStatus((prev) => {
+        const next = { ...prev, [activeComp.id]: 'completed' as ComponentStatus };
+        const idx = reactComponents.findIndex((c) => c.id === activeComp.id);
+        const nxt = reactComponents[idx + 1];
+        if (nxt && next[nxt.id] === 'locked') next[nxt.id] = 'active';
+        return next;
+      });
+    } else {
+      setReactBanner('fail');
     }
   };
+
+  // --- CSS PLAYGROUND STATE ---
+  const [activeCssId, setActiveCssId] = useState<string>(cssComponents[0].id);
+  const [cssCode, setCssCode] = useState<string>(cssComponents[0].starterCode);
+  const [cssPreviewSrc, setCssPreviewSrc] = useState<string>(() =>
+    cssPreviewHTML(cssComponents[0].starterCode, cssComponents[0].solutionPreviewHTML)
+  );
+
+  const activeCss = cssComponents.find((c) => c.id === activeCssId) ?? cssComponents[0];
+
+  const applyCss = (code: string, baseHTML: string) => {
+    setCssPreviewSrc(cssPreviewHTML(code, baseHTML));
+  };
+
+  const selectCssComponent = (comp: (typeof cssComponents)[number]) => {
+    setActiveCssId(comp.id);
+    setCssCode(comp.starterCode);
+    applyCss(comp.starterCode, comp.solutionPreviewHTML);
+  };
+
+  // --- CHALLENGES STATE ---
+  const [challengeId, setChallengeId] = useState<string>(challengeComponents[0].id);
+  const [challengeCode, setChallengeCode] = useState<string>(challengeComponents[0].starterCode);
+  const [challengeResults, setChallengeResults] = useState<CheckResult[] | null>(null);
+  const [challengeBanner, setChallengeBanner] = useState<'success' | 'fail' | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(challengeComponents[0].timeLimit * 60);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timeUp, setTimeUp] = useState(false);
+  const [completedChallenges, setCompletedChallenges] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('bf_playground_challenges_completed_v1');
+      return saved ? (JSON.parse(saved) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const activeChallenge =
+    challengeComponents.find((c) => c.id === challengeId) ?? challengeComponents[0];
+
+  // Countdown timer
+  useEffect(() => {
+    if (!timerRunning) return;
+    const t = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setTimerRunning(false);
+          setTimeUp(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [timerRunning]);
+
+  const selectChallenge = (comp: (typeof challengeComponents)[number]) => {
+    setChallengeId(comp.id);
+    setChallengeCode(comp.starterCode);
+    setChallengeResults(null);
+    setChallengeBanner(null);
+    setTimeLeft(comp.timeLimit * 60);
+    setTimerRunning(false);
+    setTimeUp(false);
+  };
+
+  const handleChallengeSubmit = () => {
+    const results = activeChallenge.checkerRules.map((rule) => ({
+      ...rule,
+      passing: challengeCode.includes(rule.check),
+    }));
+    setChallengeResults(results);
+    const requiredFail = results.filter((r) => r.required && !r.passing).length;
+    if (requiredFail === 0) {
+      fireConfetti();
+      setChallengeBanner('success');
+      setTimerRunning(false);
+      const next = Array.from(new Set([...completedChallenges, activeChallenge.id]));
+      setCompletedChallenges(next);
+      try {
+        localStorage.setItem('bf_playground_challenges_completed_v1', JSON.stringify(next));
+      } catch {
+        // ignore storage failures
+      }
+    } else {
+      setChallengeBanner('fail');
+    }
+  };
+
+  const timerPct = timeLeft / (activeChallenge.timeLimit * 60);
+  const timerColor = timerPct > 0.5 ? '#16a34a' : timerPct > 0.1 ? '#d97706' : '#dc2626';
+
+  const tabButton = (id: PlaygroundTab, label: string, icon: React.ReactNode) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+        activeTab === id
+          ? 'bg-violet-600 text-white shadow-md'
+          : 'text-gray-600 hover:text-indigo-950'
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
 
   return (
     <div className="space-y-6">
@@ -226,34 +617,16 @@ export default function LoginPage() {
             <span>Interactive Playground Hub</span>
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
-            Real-time interactive sandboxes for SQL database queries and React component builds.
+            Real-time sandboxes for SQL queries, React component builds, CSS experiments, and timed challenges.
           </p>
         </div>
 
         {/* Glass Tab Switcher */}
-        <div className="glass-card p-1 flex items-center gap-1 self-start sm:self-auto">
-          <button
-            onClick={() => setActiveTab('sql')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'sql'
-                ? 'bg-violet-600 text-white shadow-md'
-                : 'text-gray-600 hover:text-indigo-950'
-            }`}
-          >
-            <Database size={15} />
-            <span>SQL Workbench</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('react')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'react'
-                ? 'bg-violet-600 text-white shadow-md'
-                : 'text-gray-600 hover:text-indigo-950'
-            }`}
-          >
-            <Code2 size={15} />
-            <span>React Sandbox</span>
-          </button>
+        <div className="glass-card p-1 flex items-center gap-1 self-start sm:self-auto flex-wrap">
+          {tabButton('sql', 'SQL Workbench', <Database size={15} />, activeTab)}
+          {tabButton('react', 'React Sandbox', <Code2 size={15} />, activeTab)}
+          {tabButton('css', 'CSS Playground', <Palette size={15} />, activeTab)}
+          {tabButton('challenges', 'Challenges', <Timer size={15} />, activeTab)}
         </div>
       </div>
 
@@ -276,7 +649,7 @@ export default function LoginPage() {
               onClick={() => {
                 setExecutionTime(`${(Math.random() * 0.005 + 0.002).toFixed(3)}s`);
               }}
-              className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:opacity-95 flex items-center gap-2"
+              className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:opacity-95 flex items-center gap-2 cursor-pointer"
               style={{ background: '#7c3aed' }}
             >
               <Play size={14} className="fill-white" />
@@ -316,25 +689,25 @@ export default function LoginPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSqlQuery('SELECT * FROM patients LIMIT 10;')}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all cursor-pointer"
                   >
                     SELECT all patients
                   </button>
                   <button
                     onClick={() => setSqlQuery(defaultSqlQuery)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all cursor-pointer"
                   >
                     JOIN appointments
                   </button>
                   <button
                     onClick={() => setSqlQuery('SELECT dept_id, COUNT(*) FROM doctors GROUP BY dept_id;')}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all cursor-pointer"
                   >
                     Count by department
                   </button>
                   <button
                     onClick={() => setSqlQuery('DESCRIBE patients;')}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all"
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium glass-card border border-white/90 text-gray-700 hover:text-violet-700 transition-all cursor-pointer"
                   >
                     Show table schema
                   </button>
@@ -422,199 +795,430 @@ export default function LoginPage() {
       {/* --- TAB 2: REACT PLAYGROUND --- */}
       {activeTab === 'react' && (
         <div className="space-y-6">
-          {/* Three Pane Layout: File Tree (180px) | Editor (flex-1) | Preview (320px) */}
+          {/* Three Pane Layout: Component Browser | Editor | Preview */}
           <div className="flex flex-col lg:flex-row gap-4 items-stretch">
-            {/* File Tree Panel (180px) */}
-            <div className="w-full lg:w-[180px] glass-card p-4 space-y-3 shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
-                PROJECT FILES
+            {/* Left: Component Browser (220px) */}
+            <div className="w-full lg:w-[220px] glass-card p-3 space-y-2 shrink-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 block px-1 pt-1">
+                Milestone components
               </span>
 
-              <div className="space-y-1 font-mono text-xs">
-                <button
-                  onClick={() => setSelectedFile('App.jsx')}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-all ${
-                    selectedFile === 'App.jsx'
-                      ? 'bg-violet-600/10 text-violet-700 font-bold border border-violet-600/20'
-                      : 'text-gray-600 hover:bg-white/60'
-                  }`}
-                >
-                  <FileCode size={14} />
-                  <span>App.jsx</span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedFile('LoginPage.jsx')}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-all ${
-                    selectedFile === 'LoginPage.jsx'
-                      ? 'bg-violet-600/10 text-violet-700 font-bold border border-violet-600/20'
-                      : 'text-gray-600 hover:bg-white/60'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileCode size={14} className="text-amber-500" />
-                    <span>LoginPage.jsx</span>
-                  </div>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="In progress" />
-                </button>
-
-                <button
-                  onClick={() => setSelectedFile('styles.css')}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-all ${
-                    selectedFile === 'styles.css'
-                      ? 'bg-violet-600/10 text-violet-700 font-bold border border-violet-600/20'
-                      : 'text-gray-600 hover:bg-white/60'
-                  }`}
-                >
-                  <FileCode size={14} />
-                  <span>styles.css</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Center Editor (flex-1) */}
-            <div className="flex-1 space-y-2">
-              <div className="rounded-2xl border border-slate-800 bg-[#0d1117] overflow-hidden shadow-2xl flex flex-col h-full">
-                {/* Editor Toolbar */}
-                <div className="bg-[#161b22] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
-                  <span className="font-mono text-xs text-slate-300 font-bold">
-                    {selectedFile}
-                  </span>
-                  <button
-                    onClick={() => setReactCode(defaultReactCode)}
-                    className="text-[10px] text-slate-400 hover:text-white font-mono flex items-center gap-1"
-                  >
-                    <RotateCcw size={12} /> Reset
-                  </button>
-                </div>
-
-                {/* Textarea Code Input */}
-                <textarea
-                  value={reactCode}
-                  onChange={(e) => setReactCode(e.target.value)}
-                  rows={14}
-                  className="w-full bg-[#0d1117] text-[#7ee787] font-mono text-xs p-4 outline-none resize-none leading-relaxed border-none flex-1"
-                />
-              </div>
-            </div>
-
-            {/* Right Live Preview (320px) */}
-            <div className="w-full lg:w-[340px] glass-card p-4 space-y-3 shrink-0 flex flex-col">
-              <div className="flex items-center justify-between border-b border-white/80 pb-2">
-                <span className="text-xs font-bold text-[#1e1b4b]">Live Preview</span>
-                <div className="flex items-center gap-1 bg-white/80 rounded-lg p-0.5 border border-white">
-                  <button
-                    onClick={() => setPreviewDevice('desktop')}
-                    className={`p-1 rounded ${previewDevice === 'desktop' ? 'bg-violet-600 text-white' : 'text-gray-400'}`}
-                  >
-                    <Laptop size={12} />
-                  </button>
-                  <button
-                    onClick={() => setPreviewDevice('mobile')}
-                    className={`p-1 rounded ${previewDevice === 'mobile' ? 'bg-violet-600 text-white' : 'text-gray-400'}`}
-                  >
-                    <Smartphone size={12} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Rendered Preview Card */}
-              <div
-                className={`rounded-xl border border-white/90 overflow-hidden bg-white/90 shadow-md p-4 transition-all ${
-                  previewDevice === 'mobile' ? 'max-w-[260px] mx-auto' : 'w-full'
-                }`}
-              >
-                <div className="space-y-3 font-sans">
-                  <h3 className="font-extrabold text-lg text-[#1e1b4b]">Sign in</h3>
-                  <p className="text-xs text-gray-500">Welcome back to BuildFirst</p>
-
-                  <div className="space-y-2">
-                    <input
-                      type="email"
-                      placeholder="Email address"
-                      className="w-full px-3 py-2 rounded-lg border border-violet-200 text-xs outline-none bg-white/80"
-                      readOnly
-                    />
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      className="w-full px-3 py-2 rounded-lg border border-violet-200 text-xs outline-none bg-white/80"
-                      readOnly
-                    />
+              <div className="space-y-2">
+                {reactComponents.map((comp) => {
+                  const status = compStatus[comp.id];
+                  const isActive = comp.id === activeCompId;
+                  const locked = status === 'locked';
+                  return (
                     <button
-                      className="w-full py-2 rounded-lg text-xs font-bold text-white shadow-sm"
-                      style={{ background: '#7c3aed' }}
+                      key={comp.id}
+                      onClick={() => selectComponent(comp)}
+                      disabled={locked}
+                      className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer disabled:cursor-not-allowed ${
+                        isActive
+                          ? 'bg-violet-600/10 border-violet-600/20'
+                          : locked
+                          ? 'opacity-50 border-transparent'
+                          : 'border-transparent hover:bg-white/70'
+                      }`}
                     >
-                      Sign in →
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`text-[13px] font-bold truncate ${
+                            isActive
+                              ? 'text-violet-700'
+                              : locked
+                              ? 'text-gray-400'
+                              : 'text-[#1e1b4b]'
+                          }`}
+                        >
+                          {comp.title}
+                        </span>
+                        {status === 'completed' && (
+                          <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                        )}
+                        {status === 'active' && (
+                          <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shrink-0" />
+                        )}
+                        {locked && <Lock size={13} className="text-gray-400 shrink-0" />}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <DifficultyBadge difficulty={comp.difficulty} />
+                        <span className="text-[11px] text-gray-400">{comp.estimatedMinutes}m</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Center: Editor (flex-1) */}
+            <div className="flex-1 space-y-3 min-w-0">
+              <DarkEditor
+                filename={activeComp.filename}
+                code={reactCode}
+                onChange={(v) => setReactCode(v)}
+                onRun={() => runCode(reactCode)}
+                onReset={() => {
+                  setReactCode(activeComp.starterCode);
+                  setReactResults(null);
+                  setReactBanner(null);
+                  runCode(activeComp.starterCode);
+                }}
+              />
+
+              {/* Concept tags row */}
+              <div className="glass-card px-4 py-2.5 flex items-center flex-wrap gap-2">
+                <span className="text-[11px] text-gray-500 font-bold">Concepts in this component:</span>
+                {activeComp.conceptTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-violet-600/10 text-violet-700 border border-violet-600/20"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Live Preview + Target Preview */}
+            <div className="w-full lg:w-[380px] space-y-4 shrink-0">
+              {/* Live preview */}
+              <div className="glass-card p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-white/80 pb-2">
+                  <span className="text-xs font-bold text-[#1e1b4b]">Live preview</span>
+                  <div className="flex items-center gap-1 bg-white/80 rounded-lg p-0.5 border border-white">
+                    <button
+                      onClick={() => setPreviewDevice('desktop')}
+                      className={`p-1.5 rounded cursor-pointer ${previewDevice === 'desktop' ? 'bg-violet-600 text-white' : 'text-gray-400'}`}
+                      title="Desktop"
+                    >
+                      <Laptop size={12} />
+                    </button>
+                    <button
+                      onClick={() => setPreviewDevice('mobile')}
+                      className={`p-1.5 rounded cursor-pointer ${previewDevice === 'mobile' ? 'bg-violet-600 text-white' : 'text-gray-400'}`}
+                      title="Mobile"
+                    >
+                      <Smartphone size={12} />
                     </button>
                   </div>
                 </div>
+
+                <div className={previewDevice === 'mobile' ? 'flex justify-center' : ''}>
+                  {previewDevice === 'mobile' ? (
+                    <div
+                      className="border-[3px] border-slate-800 rounded-2xl overflow-hidden shadow-lg"
+                      style={{ width: 375 }}
+                    >
+                      <iframe
+                        srcDoc={previewSrc ?? undefined}
+                        className="w-full h-[340px] bg-white border-0"
+                        title="live-preview"
+                      />
+                    </div>
+                  ) : (
+                    <iframe
+                      srcDoc={previewSrc ?? undefined}
+                      className="w-full h-[340px] bg-white border border-white/90 rounded-xl"
+                      title="live-preview"
+                    />
+                  )}
+                </div>
+
+                {previewLoading && (
+                  <p className="text-[11px] font-mono text-violet-600 flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full border-2 border-violet-600 border-t-transparent animate-spin inline-block" />
+                    Compiling with Babel…
+                  </p>
+                )}
+              </div>
+
+              {/* Target preview */}
+              <div className="glass-card p-4 space-y-2">
+                <div className="flex items-center gap-2 border-b border-white/80 pb-2">
+                  <Eye size={14} className="text-violet-600" />
+                  <span className="text-xs font-bold text-[#1e1b4b]">What it should look like</span>
+                </div>
+                <iframe
+                  srcDoc={activeComp.solutionPreviewHTML}
+                  className="w-full h-[200px] bg-white border border-white/90 rounded-xl"
+                  title="target-preview"
+                />
+                <p className="text-[11px] text-gray-400 font-medium">Your goal — try to match this</p>
               </div>
             </div>
           </div>
 
-          {/* Milestone Checker Panel */}
-          <div className="glass-card p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/80 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 block">
-                  REACT MILESTONE 1 CHECKER
-                </span>
-                <h3 className="font-extrabold text-base text-[#1e1b4b]">
-                  Build the Login Page Component
-                </h3>
-              </div>
+          {/* Milestone Checker */}
+          <CheckerPanel
+            kicker={`React Milestone ${activeComp.milestoneId} Checker`}
+            title={`Milestone checker — ${activeComp.title}`}
+            statusLabel={compStatus[activeComp.id] === 'completed' ? 'Completed' : 'Active'}
+            statusTone={compStatus[activeComp.id] === 'completed' ? 'green' : 'violet'}
+            rules={activeComp.checkerRules}
+            results={reactResults}
+            onCheck={handleReactCheck}
+            successTitle={`Milestone ${activeComp.milestoneId} Complete! +150 XP earned`}
+            successBody="All required checks pass. The next milestone is now unlocked in the sidebar."
+            showSuccess={reactBanner === 'success'}
+          />
 
-              <button
-                onClick={handleCheckWork}
-                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:opacity-95 self-start sm:self-auto"
-                style={{ background: '#7c3aed' }}
+          {/* Hints */}
+          <div className="glass-card p-4">
+            <button
+              onClick={() => setShowHints(!showHints)}
+              className="flex items-center gap-2 text-xs font-bold text-violet-700 cursor-pointer"
+            >
+              <HelpCircle size={14} />
+              {showHints ? 'Hide hints' : `Show hints (${activeComp.hints.length})`}
+            </button>
+            {showHints && (
+              <ul className="mt-3 space-y-1.5 text-xs text-gray-600">
+                {activeComp.hints.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-violet-600 font-bold shrink-0">→</span>
+                    <span>{h}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 3: CSS PLAYGROUND --- */}
+      {activeTab === 'css' && (
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+          {/* Left: Component List (180px) */}
+          <div className="w-full lg:w-[180px] glass-card p-3 space-y-2 shrink-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 block px-1 pt-1">
+              CSS experiments
+            </span>
+
+            <div className="space-y-2">
+              {cssComponents.map((comp) => {
+                const isActive = comp.id === activeCssId;
+                return (
+                  <button
+                    key={comp.id}
+                    onClick={() => selectCssComponent(comp)}
+                    className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-violet-600/10 border-violet-600/20'
+                        : 'border-transparent hover:bg-white/70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-[13px] font-bold truncate ${
+                          isActive ? 'text-violet-700' : 'text-[#1e1b4b]'
+                        }`}
+                      >
+                        {comp.title}
+                      </span>
+                      {isActive && (
+                        <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <DifficultyBadge difficulty={comp.difficulty} />
+                      <span className="text-[11px] text-gray-400">{comp.estimatedMinutes}m</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Center: CSS Editor */}
+          <div className="flex-1 space-y-3 min-w-0">
+            <DarkEditor
+              filename={activeCss.filename}
+              code={cssCode}
+              onChange={(v) => setCssCode(v)}
+              onRun={() => applyCss(cssCode, activeCss.solutionPreviewHTML)}
+              onReset={() => {
+                setCssCode(activeCss.starterCode);
+                applyCss(activeCss.starterCode, activeCss.solutionPreviewHTML);
+              }}
+              runLabel="Apply Styles ▶"
+              hint="⌘+Enter"
+              languageTag="CSS"
+            />
+
+            {/* Concept tags row */}
+            <div className="glass-card px-4 py-2.5 flex items-center flex-wrap gap-2">
+              <span className="text-[11px] text-gray-500 font-bold">Concepts in this experiment:</span>
+              {activeCss.conceptTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-violet-600/10 text-violet-700 border border-violet-600/20"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: CSS Live Preview */}
+          <div className="w-full lg:w-[380px] glass-card p-4 space-y-3 shrink-0">
+            <div className="flex items-center justify-between border-b border-white/80 pb-2">
+              <span className="text-xs font-bold text-[#1e1b4b]">Live preview</span>
+              <span className="text-[10px] font-mono text-gray-400">your styles applied</span>
+            </div>
+            <iframe
+              srcDoc={cssPreviewSrc}
+              className="w-full h-[420px] bg-white border border-white/90 rounded-xl"
+              title="css-preview"
+            />
+            <p className="text-[11px] text-gray-400 font-medium">
+              Edit the CSS and press <span className="font-mono font-bold text-violet-600">Apply Styles</span> to see your changes.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* --- TAB 4: CHALLENGES --- */}
+      {activeTab === 'challenges' && (
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+          {/* Left: Challenge List (240px) */}
+          <div className="w-full lg:w-[240px] glass-card p-3 space-y-2 shrink-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 block px-1 pt-1">
+              Timed challenges
+            </span>
+
+            <div className="space-y-2">
+              {challengeComponents.map((comp) => {
+                const isActive = comp.id === challengeId;
+                const isCompleted = completedChallenges.includes(comp.id);
+                return (
+                  <button
+                    key={comp.id}
+                    onClick={() => selectChallenge(comp)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-violet-600/10 border-violet-600/20'
+                        : 'border-transparent hover:bg-white/70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-[13px] font-bold truncate ${
+                          isActive ? 'text-violet-700' : 'text-[#1e1b4b]'
+                        }`}
+                      >
+                        {comp.title}
+                      </span>
+                      {isCompleted && <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <DifficultyBadge difficulty={comp.difficulty} />
+                      <span className="text-[11px] text-amber-600 font-bold">⏱ {comp.timeLimit} min</span>
+                      <span className="text-[11px] text-emerald-600 font-bold">⭐ +{comp.xpReward} XP</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Center: Editor */}
+          <div className="flex-1 space-y-3 min-w-0">
+            <DarkEditor
+              filename={activeChallenge.filename}
+              code={challengeCode}
+              onChange={(v) => setChallengeCode(v)}
+              onRun={() => handleChallengeSubmit()}
+              onReset={() => {
+                setChallengeCode(activeChallenge.starterCode);
+                setChallengeResults(null);
+                setChallengeBanner(null);
+              }}
+              runLabel="Run ▶"
+              hint="⌘+Enter"
+              disabled={timeUp}
+            />
+
+            {/* Concept tags row */}
+            <div className="glass-card px-4 py-2.5 flex items-center flex-wrap gap-2">
+              <span className="text-[11px] text-gray-500 font-bold">Concepts in this challenge:</span>
+              {activeChallenge.conceptTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-violet-600/10 text-violet-700 border border-violet-600/20"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Timer + Checker */}
+          <div className="w-full lg:w-[340px] space-y-4 shrink-0">
+            {/* Countdown timer */}
+            <div className="glass-card p-5 text-center space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                Countdown
+              </span>
+              <p
+                className="font-mono text-5xl font-extrabold"
+                style={{ color: timerColor, fontVariantNumeric: 'tabular-nums', textShadow: timerColor !== '#16a34a' ? `0 0 20px ${timerColor}33` : 'none' }}
               >
-                Check My Work →
-              </button>
+                {formatTime(timeLeft)}
+              </p>
+              <div className="flex gap-2 justify-center">
+                {!timeUp && (
+                  <button
+                    onClick={() => setTimerRunning((r) => !r)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                    style={
+                      timerRunning
+                        ? { background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.35)' }
+                        : { background: '#7c3aed', color: 'white', border: '1px solid #7c3aed', boxShadow: '0 4px 16px rgba(124,58,237,0.35)' }
+                    }
+                  >
+                    {timerRunning ? <Pause size={13} /> : <Play size={13} className="fill-current" />}
+                    {timerRunning ? 'Pause' : 'Start timer'}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setTimerRunning(false);
+                    setTimeUp(false);
+                    setTimeLeft(activeChallenge.timeLimit * 60);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-white/60 border border-white/90 hover:bg-white cursor-pointer transition-all"
+                >
+                  Reset
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-600 font-bold flex items-center justify-center gap-1">
+                <Gift size={12} />
+                +{activeChallenge.xpReward} XP if completed in time
+              </p>
             </div>
 
-            {/* Checklist items */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl border border-white/90 bg-white/60 flex items-center gap-2 text-xs">
-                {checkEmailInput ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
-                <span className={checkEmailInput ? 'font-bold text-[#1e1b4b]' : 'text-gray-500'}>
-                  Has &lt;input type="email"&gt; element
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl border border-white/90 bg-white/60 flex items-center gap-2 text-xs">
-                {checkPasswordInput ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
-                <span className={checkPasswordInput ? 'font-bold text-[#1e1b4b]' : 'text-gray-500'}>
-                  Has &lt;input type="password"&gt; element
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl border border-white/90 bg-white/60 flex items-center gap-2 text-xs">
-                {checkForm ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
-                <span className={checkForm ? 'font-bold text-[#1e1b4b]' : 'text-gray-500'}>
-                  Wrapped in a &lt;form&gt; tag
-                </span>
-              </div>
-
-              <div className="p-3 rounded-xl border border-white/90 bg-white/60 flex items-center gap-2 text-xs">
-                {checkSubmitButton ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
-                <span className={checkSubmitButton ? 'font-bold text-[#1e1b4b]' : 'text-gray-500'}>
-                  Has &lt;button type="submit"&gt; button
-                </span>
-              </div>
-            </div>
-
-            {/* Completion Banner */}
-            {milestoneCompleted && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 flex items-center gap-3 animate-in fade-in">
-                <Sparkles size={20} className="text-emerald-600 shrink-0" />
-                <div>
-                  <p className="font-bold text-sm">Milestone 1 Complete! 🎉</p>
-                  <p className="text-xs">You successfully built and verified the Login Page component!</p>
-                </div>
+            {timeUp && (
+              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 flex items-center gap-3 animate-bf-pop">
+                <AlertCircle size={18} className="text-rose-600 shrink-0" />
+                <p className="text-xs font-bold">Time's up! The editor is locked — hit Reset and try again.</p>
               </div>
             )}
+
+            {/* Challenge checker */}
+            <CheckerPanel
+              kicker="Challenge submission"
+              title={activeChallenge.title}
+              statusLabel={completedChallenges.includes(activeChallenge.id) ? 'Completed' : 'In progress'}
+              statusTone={completedChallenges.includes(activeChallenge.id) ? 'green' : 'violet'}
+              rules={activeChallenge.checkerRules}
+              results={challengeResults}
+              onCheck={handleChallengeSubmit}
+              checkLabel="Submit Solution →"
+              successTitle={`Challenge Complete! +${activeChallenge.xpReward} XP earned`}
+              successBody="All required checks pass. Great speed and precision!"
+              showSuccess={challengeBanner === 'success'}
+            />
           </div>
         </div>
       )}
